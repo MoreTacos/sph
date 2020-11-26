@@ -10,6 +10,7 @@ edition = "2018"
 wgpu = "0.6"
 winit = "0.22"
 futures = "0.3"
+bytemuck = "1.4"
 
 [build-dependencies]
 anyhow = "1.0"

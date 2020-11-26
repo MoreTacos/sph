@@ -1,3 +1,5 @@
+use std::iter;
+use wgpu::util::DeviceExt;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -7,6 +9,15 @@ use winit::{
 use core::future::Future;
 use futures::executor::block_on;
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct Vertex {
+    pub position: [f32; 2],
+}
+
+unsafe impl bytemuck::Pod for Vertex {}
+unsafe impl bytemuck::Zeroable for Vertex {}
+
 pub struct State {
     pub surface: wgpu::Surface,
     pub device: wgpu::Device,
@@ -15,10 +26,11 @@ pub struct State {
     pub sc_desc: wgpu::SwapChainDescriptor,
     pub swap_chain: wgpu::SwapChain,
     pub render_pipeline: wgpu::RenderPipeline,
-    /*size: winit::dpi::PhysicalSize<u32>,
-    vertex_buffer: wgpu::Buffer,
-    instances: Vec<Instance>,
-    instance_buffer: wgpu::Buffer, */
+    pub vertex_buffer: wgpu::Buffer,
+    pub index_buffer: wgpu::Buffer,
+    pub num_indices: u32,
+    /*pub instances: Vec<Instance>,
+    pub instance_buffer: wgpu::Buffer, */
 }
 
 impl State {
@@ -116,5 +128,22 @@ impl State {
             sample_mask: !0,
             alpha_to_coverage_enabled: false,
         })
+    }
+    pub fn Vertex_Buffer(device: &wgpu::Device, vertices: &[Vertex]) -> wgpu::Buffer {
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(vertices),
+            usage: wgpu::BufferUsage::VERTEX,
+        })
+    }
+    pub fn Index_Buffer(device: &wgpu::Device, indices: &[u16]) -> wgpu::Buffer {
+        device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(indices),
+            usage: wgpu::BufferUsage::INDEX,
+        })
+    }
+    pub fn Num_Indices(indices: &[u16]) -> u32 {
+        indices.len() as u32
     }
 }
