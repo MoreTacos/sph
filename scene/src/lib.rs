@@ -1,6 +1,8 @@
 mod state_init;
 use std::iter;
-use crate::state_init::{State, Vertex};
+use futures::executor::block_on; 
+pub use crate::state_init::State;
+use crate::state_init::Vertex;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -28,7 +30,7 @@ impl State {
     pub async fn new(window: &Window) -> Self {
         let instance = &State::Instance();
         let surface = State::Surface(instance, window);
-        let (device, queue) = State::DeviceQueue(instance, &surface);
+        let (device, queue) = State::DeviceQueue(instance, &surface).await;
         let size = State::Size(window);
         let sc_desc = State::Sc_Desc(&size);
         let swap_chain = State::Swap_Chain(&device, &surface, &sc_desc);
@@ -59,7 +61,7 @@ impl State {
         false
     }
     pub fn update(&mut self) {}
-    pub fn render(&mut self) {
+    pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
         let frame = self
             .swap_chain
             .get_current_frame()
@@ -93,6 +95,8 @@ impl State {
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
         self.queue.submit(iter::once(encoder.finish()));
+
+        Ok(())
     }
 }
 
