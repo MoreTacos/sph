@@ -10,3 +10,9 @@ edition = "2018"
 wgpu = "0.6"
 winit = "0.22"
 futures = "0.3"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.1"
+glob = "0.3"
+shaderc = "0.6"
