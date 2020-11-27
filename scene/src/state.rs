@@ -141,7 +141,9 @@ impl State {
         let instances = (0..num_instances_per_row)
             .flat_map(|y| {
                 (0..num_instances_per_row).map(move |x| {
-                    let position = cgmath::Vector3 { x: x as f32, y: y as f32, z: 0.0 };
+                    let x = (x as f32 / 10.0);
+                    let y = (y as f32 / 10.0);
+                    let position = cgmath::Vector3 { x, y, z: 0.0 };
 
                     let rotation = cgmath::Quaternion::from_axis_angle(
                         cgmath::Vector3::unit_z(),

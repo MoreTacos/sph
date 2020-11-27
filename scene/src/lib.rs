@@ -9,16 +9,16 @@ use winit::{event::*, window::Window};
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.1, 0.1],
+        position: [-0.01, 0.01],
     },
     Vertex {
-        position: [0.1, 0.1],
+        position: [0.01, 0.01],
     },
     Vertex {
-        position: [-0.1, -0.1],
+        position: [-0.01, -0.01],
     },
     Vertex {
-        position: [0.1, -0.1],
+        position: [0.01, -0.01],
     },
 ];
 
