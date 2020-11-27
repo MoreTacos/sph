@@ -1,39 +1,8 @@
-use std::iter;
-use std::mem;
+use crate::instance::{Instance, InstanceRaw};
+use crate::Vertex;
+use cgmath::{Rotation3, Vector3};
 use wgpu::util::DeviceExt;
-use winit::{
-    event::*,
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
-};
-
-use core::future::Future;
-use futures::executor::block_on;
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct Vertex {
-    pub position: [f32; 2],
-}
-
-unsafe impl bytemuck::Pod for Vertex {}
-unsafe impl bytemuck::Zeroable for Vertex {}
-
-impl Vertex {
-    fn desc<'a>() -> wgpu::VertexBufferDescriptor<'a> {
-        wgpu::VertexBufferDescriptor {
-            stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::InputStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttributeDescriptor {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float2,
-                },
-            ],
-        }
-    }
-}
+use winit::window::Window;
 
 pub struct State {
     pub surface: wgpu::Surface,
@@ -46,8 +15,8 @@ pub struct State {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub num_indices: u32,
-    /*pub instances: Vec<Instance>,
-    pub instance_buffer: wgpu::Buffer, */
+    pub instances: Vec<Instance>,
+    pub instance_buffer: wgpu::Buffer,
 }
 
 impl State {
@@ -61,22 +30,24 @@ impl State {
         instance: &wgpu::Instance,
         surface: &wgpu::Surface,
     ) -> (wgpu::Device, wgpu::Queue) {
-        let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::Default,
-            compatible_surface: Some(surface),
-        })
-        .await
-        .unwrap();
-        let (device, queue) = adapter.request_device(
-            &wgpu::DeviceDescriptor {
-                features: wgpu::Features::empty(),
-                limits: wgpu::Limits::default(),
-                shader_validation: true,
-            },
-            None,
-        )
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::Default,
+                compatible_surface: Some(surface),
+            })
             .await
-        .unwrap();
+            .unwrap();
+        let (device, queue) = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    features: wgpu::Features::empty(),
+                    limits: wgpu::Limits::default(),
+                    shader_validation: true,
+                },
+                None,
+            )
+            .await
+            .unwrap();
         (device, queue)
     }
     pub fn Size(window: &Window) -> winit::dpi::PhysicalSize<u32> {
@@ -141,7 +112,7 @@ impl State {
             depth_stencil_state: None,
             vertex_state: wgpu::VertexStateDescriptor {
                 index_format: wgpu::IndexFormat::Uint16,
-                vertex_buffers: &[Vertex::desc()],
+                vertex_buffers: &[Vertex::desc(), InstanceRaw::desc()],
             },
             sample_count: 1,
             sample_mask: !0,
@@ -165,5 +136,31 @@ impl State {
     }
     pub fn Num_Indices(indices: &[u16]) -> u32 {
         indices.len() as u32
+    }
+    pub fn Instances(num_instances_per_row: u32) -> Vec<Instance> {
+        let instances = (0..num_instances_per_row)
+            .flat_map(|y| {
+                (0..num_instances_per_row).map(move |x| {
+                    let position = cgmath::Vector3 { x: x as f32, y: y as f32, z: 0.0 };
+
+                    let rotation = cgmath::Quaternion::from_axis_angle(
+                        cgmath::Vector3::unit_z(),
+                        cgmath::Deg(0.0),
+                    );
+
+                    Instance { position, rotation }
+                })
+            })
+            .collect::<Vec<_>>();
+        instances
+    }
+    pub fn Instance_Buffer(device: &wgpu::Device, instances: &Vec<Instance>) -> wgpu::Buffer {
+        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+        let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(&instance_data),
+            usage: wgpu::BufferUsage::VERTEX,
+        });
+        instance_buffer
     }
 }

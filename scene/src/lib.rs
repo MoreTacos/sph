@@ -1,30 +1,31 @@
-mod state_init;
+mod instance;
+mod state;
+mod vertex;
+
+pub use crate::state::State;
+use crate::vertex::Vertex;
 use std::iter;
-use futures::executor::block_on; 
-pub use crate::state_init::State;
-use crate::state_init::Vertex;
-use winit::{
-    event::*,
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
-};
+use winit::{event::*, window::Window};
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.5, 0.5],
+        position: [-0.1, 0.1],
     },
     Vertex {
-        position: [0.5, 0.5],
+        position: [0.1, 0.1],
     },
     Vertex {
-        position: [-0.5, -0.5],
+        position: [-0.1, -0.1],
     },
     Vertex {
-        position: [0.5, -0.5],
+        position: [0.1, -0.1],
     },
 ];
 
 const INDICES: &[u16] = &[0, 1, 2, 1, 2, 3];
+
+const NUM_INSTANCES_PER_ROW: u32 = 10;
+const NUM_INSTANCES: u32 = NUM_INSTANCES_PER_ROW * NUM_INSTANCES_PER_ROW;
 
 impl State {
     pub async fn new(window: &Window) -> Self {
@@ -38,6 +39,8 @@ impl State {
         let vertex_buffer = State::Vertex_Buffer(&device, VERTICES);
         let index_buffer = State::Index_Buffer(&device, INDICES);
         let num_indices = State::Num_Indices(INDICES);
+        let instances = State::Instances(NUM_INSTANCES_PER_ROW);
+        let instance_buffer = State::Instance_Buffer(&device, &instances);
         Self {
             surface,
             device,
@@ -49,6 +52,8 @@ impl State {
             vertex_buffer,
             index_buffer,
             num_indices,
+            instances,
+            instance_buffer,
         }
     }
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -62,10 +67,7 @@ impl State {
     }
     pub fn update(&mut self) {}
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
-        let frame = self
-            .swap_chain
-            .get_current_frame()?
-            .output;
+        let frame = self.swap_chain.get_current_frame()?.output;
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -90,8 +92,9 @@ impl State {
             });
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..));
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
         }
         self.queue.submit(iter::once(encoder.finish()));
 
