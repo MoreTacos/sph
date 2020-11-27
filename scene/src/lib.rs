@@ -24,7 +24,7 @@ const VERTICES: &[Vertex] = &[
     },
 ];
 
-const INDICES: &[u16] = &[0, 1, 2, 1, 3, 3];
+const INDICES: &[u16] = &[0, 1, 2, 1, 2, 3];
 
 impl State {
     pub async fn new(window: &Window) -> Self {
@@ -64,8 +64,7 @@ impl State {
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
         let frame = self
             .swap_chain
-            .get_current_frame()
-            .expect("Timeout getting texture")
+            .get_current_frame()?
             .output;
         let mut encoder = self
             .device
@@ -79,9 +78,9 @@ impl State {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.5,
-                            g: 0.5,
-                            b: 0.3,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
                             a: 1.0,
                         }),
                         store: true,
