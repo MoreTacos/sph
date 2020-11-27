@@ -1,5 +1,5 @@
 [package]
-name = "sph"
+name = "utils"
 version = "0.1.0"
 authors = ["Davide Radaelli <daviderady@gmail.com>"]
 edition = "2018"
@@ -7,4 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-utils = { path = "../utils" }
+wgpu = "0.6"
+bytemuck = "1.4"
+cgmath = "0.17"

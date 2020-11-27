@@ -1,4 +1,5 @@
 /target
 /scene/target
 /sph/target
+/utils/target
 **/*.spv

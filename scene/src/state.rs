@@ -1,6 +1,7 @@
-use crate::instance::{Instance, InstanceRaw};
-use crate::Vertex;
 use cgmath::{Rotation3, Vector3};
+use utils::Instance;
+use utils::InstanceRaw;
+use utils::Vertex;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 
@@ -17,6 +18,7 @@ pub struct State {
     pub num_indices: u32,
     pub instances: Vec<Instance>,
     pub instance_buffer: wgpu::Buffer,
+    pub timestep: fn(&Vec<Instance>) -> Vec<Instance>,
 }
 
 impl State {
@@ -136,25 +138,6 @@ impl State {
     }
     pub fn Num_Indices(indices: &[u16]) -> u32 {
         indices.len() as u32
-    }
-    pub fn Instances(num_instances_per_row: u32) -> Vec<Instance> {
-        let instances = (0..num_instances_per_row)
-            .flat_map(|y| {
-                (0..num_instances_per_row).map(move |x| {
-                    let x = (x as f32 / 10.0);
-                    let y = (y as f32 / 10.0);
-                    let position = cgmath::Vector3 { x, y, z: 0.0 };
-
-                    let rotation = cgmath::Quaternion::from_axis_angle(
-                        cgmath::Vector3::unit_z(),
-                        cgmath::Deg(0.0),
-                    );
-
-                    Instance { position, rotation }
-                })
-            })
-            .collect::<Vec<_>>();
-        instances
     }
     pub fn Instance_Buffer(device: &wgpu::Device, instances: &Vec<Instance>) -> wgpu::Buffer {
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();

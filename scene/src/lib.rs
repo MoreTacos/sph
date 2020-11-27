@@ -1,10 +1,10 @@
-mod instance;
 mod state;
-mod vertex;
 
 pub use crate::state::State;
-use crate::vertex::Vertex;
 use std::iter;
+use utils::Instance;
+use utils::InstanceRaw;
+use utils::Vertex;
 use winit::{event::*, window::Window};
 
 const VERTICES: &[Vertex] = &[
@@ -24,11 +24,12 @@ const VERTICES: &[Vertex] = &[
 
 const INDICES: &[u16] = &[0, 1, 2, 1, 2, 3];
 
-const NUM_INSTANCES_PER_ROW: u32 = 10;
-const NUM_INSTANCES: u32 = NUM_INSTANCES_PER_ROW * NUM_INSTANCES_PER_ROW;
-
 impl State {
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(
+        window: &Window,
+        instances: Vec<Instance>,
+        timestep: fn(&Vec<Instance>) -> Vec<Instance>,
+    ) -> Self {
         let instance = &State::Instance();
         let surface = State::Surface(instance, window);
         let (device, queue) = State::DeviceQueue(instance, &surface).await;
@@ -39,7 +40,6 @@ impl State {
         let vertex_buffer = State::Vertex_Buffer(&device, VERTICES);
         let index_buffer = State::Index_Buffer(&device, INDICES);
         let num_indices = State::Num_Indices(INDICES);
-        let instances = State::Instances(NUM_INSTANCES_PER_ROW);
         let instance_buffer = State::Instance_Buffer(&device, &instances);
         Self {
             surface,
@@ -54,6 +54,7 @@ impl State {
             num_indices,
             instances,
             instance_buffer,
+            timestep,
         }
     }
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -67,6 +68,9 @@ impl State {
     }
     pub fn update(&mut self) {}
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
+        self.instances = (self.timestep)(&self.instances);
+        self.instance_buffer = State::Instance_Buffer(&self.device, &self.instances);
+
         let frame = self.swap_chain.get_current_frame()?.output;
         let mut encoder = self
             .device

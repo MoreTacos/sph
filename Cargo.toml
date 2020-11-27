@@ -9,8 +9,10 @@ edition = "2018"
 [dependencies]
 sph = { path = "sph" }
 scene = { path = "scene" }
+utils = { path = "utils" }
 wgpu = "0.6"
 winit = "0.22"
 futures = "0.3"
 bytemuck = "1.4"
 env_logger = "0.7"
+cgmath = "0.17"

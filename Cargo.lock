@@ -680,10 +680,12 @@ name = "icr"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "cgmath",
  "env_logger",
  "futures",
  "scene",
  "sph",
+ "utils",
  "wgpu",
  "winit",
 ]
@@ -1383,6 +1385,7 @@ dependencies = [
  "futures",
  "glob",
  "shaderc",
+ "utils",
  "wgpu",
  "winit",
 ]
@@ -1450,6 +1453,9 @@ dependencies = [
 [[package]]
 name = "sph"
 version = "0.1.0"
+dependencies = [
+ "utils",
+]
 
 [[package]]
 name = "spirv_cross"
@@ -1591,6 +1597,15 @@ name = "unicode-xid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
+
+[[package]]
+name = "utils"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "cgmath",
+ "wgpu",
+]
 
 [[package]]
 name = "void"
