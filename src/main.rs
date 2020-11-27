@@ -3,41 +3,23 @@ extern crate scene;
 use crate::scene::State;
 use futures::executor::block_on;
 
+use sph::Sph;
+
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
 
-use cgmath::Rotation3;
-use utils::Instance;
 
 const NUM_INSTANCES_PER_ROW: i32 = 10;
 
-fn timestep(instances: &Vec<Instance>) -> Vec<Instance> {
-    instances.to_vec()
-}
 
 fn main() {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
-    let instances: Vec<Instance> = (0..NUM_INSTANCES_PER_ROW)
-        .flat_map(|y| {
-            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                let x = (x as f32 / 10.0);
-                let y = (y as f32 / 10.0);
-                let position = cgmath::Vector3 { x, y, z: 0.0 };
-
-                let rotation = cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::unit_z(),
-                    cgmath::Deg(0.0),
-                );
-
-                Instance { position, rotation }
-            })
-        })
-        .collect::<Vec<_>>();
+    let (instances, timestep) = Sph::new(NUM_INSTANCES_PER_ROW);
     let mut state = block_on(State::new(&window, instances, timestep));
 
     event_loop.run(move |event, _, control_flow| match event {
