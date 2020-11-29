@@ -2,6 +2,7 @@ mod state;
 
 pub use crate::state::State;
 use std::iter;
+use sph::Sph;
 use utils::Instance;
 use utils::InstanceRaw;
 use utils::Vertex;
@@ -27,8 +28,7 @@ const INDICES: &[u16] = &[0, 1, 2, 1, 2, 3];
 impl State {
     pub async fn new(
         window: &Window,
-        instances: Vec<Instance>,
-        timestep: fn(&Vec<Instance>) -> Vec<Instance>,
+        model: Sph,
     ) -> Self {
         let instance = &State::Instance();
         let surface = State::Surface(instance, window);
@@ -40,6 +40,7 @@ impl State {
         let vertex_buffer = State::Vertex_Buffer(&device, VERTICES);
         let index_buffer = State::Index_Buffer(&device, INDICES);
         let num_indices = State::Num_Indices(INDICES);
+        let instances = model.instances();
         let instance_buffer = State::Instance_Buffer(&device, &instances);
         Self {
             surface,
@@ -54,7 +55,7 @@ impl State {
             num_indices,
             instances,
             instance_buffer,
-            timestep,
+            model,
         }
     }
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -68,7 +69,8 @@ impl State {
     }
     pub fn update(&mut self) {}
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
-        self.instances = (self.timestep)(&self.instances);
+        self.model.timestep();
+        self.instances = self.model.instances();
         self.instance_buffer = State::Instance_Buffer(&self.device, &self.instances);
 
         let frame = self.swap_chain.get_current_frame()?.output;

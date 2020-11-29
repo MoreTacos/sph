@@ -19,8 +19,8 @@ fn main() {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
-    let (instances, timestep) = Sph::new(NUM_INSTANCES_PER_ROW);
-    let mut state = block_on(State::new(&window, instances, timestep));
+    let model = Sph::new(NUM_INSTANCES_PER_ROW);
+    let mut state = block_on(State::new(&window, model));
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {

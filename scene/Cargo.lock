@@ -1295,6 +1295,7 @@ dependencies = [
  "futures",
  "glob",
  "shaderc",
+ "sph",
  "utils",
  "wgpu",
  "winit",
@@ -1358,6 +1359,14 @@ dependencies = [
  "nix",
  "wayland-client",
  "wayland-protocols",
+]
+
+[[package]]
+name = "sph"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "utils",
 ]
 
 [[package]]

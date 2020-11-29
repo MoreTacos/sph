@@ -1,4 +1,5 @@
 use cgmath::{Rotation3, Vector3};
+use sph::Sph;
 use utils::Instance;
 use utils::InstanceRaw;
 use utils::Vertex;
@@ -18,7 +19,7 @@ pub struct State {
     pub num_indices: u32,
     pub instances: Vec<Instance>,
     pub instance_buffer: wgpu::Buffer,
-    pub timestep: fn(&Vec<Instance>) -> Vec<Instance>,
+    pub model: Sph
 }
 
 impl State {

@@ -2,36 +2,44 @@ use cgmath::Rotation3;
 use utils::Instance;
 
 pub struct Sph {
-    number_of_particles: i32
+    pub particles: Vec<[f32; 2]>,
+    pub timestep: fn(&Vec<[f32; 2]>) -> Vec<[f32; 2]>,
 }
 
 impl Sph {
-    pub fn new(number_instances_per_row: i32) -> (Vec<Instance>, fn(&Vec<Instance>) -> Vec<Instance>) {
-        let instances: Vec<Instance> = (0..number_instances_per_row)
-        .flat_map(|y| {
-            (0..number_instances_per_row).map(move |x| {
-                let x = (x as f32 / 10.0);
-                let y = (y as f32 / 10.0);
-                let position = cgmath::Vector3 { x, y, z: 0.0 };
+    pub fn new(number_instances_per_row: i32) -> Self {
+        let particles = vec![[0.5, 1.0], [0.5, 0.4], [0.0, 0.5]];
 
-                let rotation = cgmath::Quaternion::from_axis_angle(
+        fn timestep(particles: &Vec<[f32; 2]>) -> Vec<[f32; 2]> {
+            particles
+                .iter()
+                .map(|p| [p[0] + 0.001, p[1] + 0.001])
+                .collect()
+        }
+        Self {
+            particles,
+            timestep,
+        }
+    }
+    pub fn instances(&self) -> Vec<Instance> {
+        let instances = self.particles
+            .iter()
+            .map(|p| Instance {
+                position: cgmath::Vector3 {
+                    x: (p[0] - 0.5) * 2.0,
+                    y: (p[1] - 0.5) * 2.0,
+                    z: 0.0,
+                },
+                rotation: cgmath::Quaternion::from_axis_angle(
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
-                );
-
-                Instance { position, rotation }
+                ),
             })
-        })
-        .collect::<Vec<_>>();
-        
-        fn timestep(instances: &Vec<Instance>) -> Vec<Instance> {
-            instances.iter().map(|instance| Instance {
-                position: instance.position + cgmath::Vector3{ x:0.01, y: 0.0, z: 0.0},
-                rotation: instance.rotation,
-            }).collect()
-        }
-
-        (instances, timestep)
+            .collect::<Vec<_>>();
+        instances
+    }
+    pub fn timestep(&mut self) {
+        self.particles = (self.timestep)(&self.particles)
     }
 }
 
