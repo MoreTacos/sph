@@ -1,4 +1,3 @@
-use cgmath::{Rotation3, Vector3};
 use sph::Sph;
 use utils::Instance;
 use utils::InstanceRaw;
@@ -19,17 +18,17 @@ pub struct State {
     pub num_indices: u32,
     pub instances: Vec<Instance>,
     pub instance_buffer: wgpu::Buffer,
-    pub model: Sph
+    pub model: Sph,
 }
 
 impl State {
-    pub fn Instance() -> wgpu::Instance {
+    pub fn instance() -> wgpu::Instance {
         wgpu::Instance::new(wgpu::BackendBit::PRIMARY)
     }
-    pub fn Surface(instance: &wgpu::Instance, window: &Window) -> wgpu::Surface {
+    pub fn surface(instance: &wgpu::Instance, window: &Window) -> wgpu::Surface {
         unsafe { instance.create_surface(window) }
     }
-    pub async fn DeviceQueue(
+    pub async fn device_queue(
         instance: &wgpu::Instance,
         surface: &wgpu::Surface,
     ) -> (wgpu::Device, wgpu::Queue) {
@@ -53,10 +52,10 @@ impl State {
             .unwrap();
         (device, queue)
     }
-    pub fn Size(window: &Window) -> winit::dpi::PhysicalSize<u32> {
+    pub fn size(window: &Window) -> winit::dpi::PhysicalSize<u32> {
         window.inner_size()
     }
-    pub fn Sc_Desc(size: &winit::dpi::PhysicalSize<u32>) -> wgpu::SwapChainDescriptor {
+    pub fn sc_desc(size: &winit::dpi::PhysicalSize<u32>) -> wgpu::SwapChainDescriptor {
         wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
             format: wgpu::TextureFormat::Bgra8UnormSrgb,
@@ -65,14 +64,14 @@ impl State {
             present_mode: wgpu::PresentMode::Fifo,
         }
     }
-    pub fn Swap_Chain(
+    pub fn swap_chain(
         device: &wgpu::Device,
         surface: &wgpu::Surface,
         sc_desc: &wgpu::SwapChainDescriptor,
     ) -> wgpu::SwapChain {
         device.create_swap_chain(surface, sc_desc)
     }
-    pub fn Render_Pipeline(
+    pub fn render_pipeline(
         device: &wgpu::Device,
         sc_desc: &wgpu::SwapChainDescriptor,
     ) -> wgpu::RenderPipeline {
@@ -123,24 +122,24 @@ impl State {
         });
         render_pipeline
     }
-    pub fn Vertex_Buffer(device: &wgpu::Device, vertices: &[Vertex]) -> wgpu::Buffer {
+    pub fn vertex_buffer(device: &wgpu::Device, vertices: &[Vertex]) -> wgpu::Buffer {
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(vertices),
             usage: wgpu::BufferUsage::VERTEX,
         })
     }
-    pub fn Index_Buffer(device: &wgpu::Device, indices: &[u16]) -> wgpu::Buffer {
+    pub fn index_buffer(device: &wgpu::Device, indices: &[u16]) -> wgpu::Buffer {
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(indices),
             usage: wgpu::BufferUsage::INDEX,
         })
     }
-    pub fn Num_Indices(indices: &[u16]) -> u32 {
+    pub fn num_indices(indices: &[u16]) -> u32 {
         indices.len() as u32
     }
-    pub fn Instance_Buffer(device: &wgpu::Device, instances: &Vec<Instance>) -> wgpu::Buffer {
+    pub fn instance_buffer(device: &wgpu::Device, instances: &Vec<Instance>) -> wgpu::Buffer {
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),

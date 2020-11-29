@@ -8,12 +8,10 @@ use sph::Sph;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    window::WindowBuilder,
 };
 
-
 const NUM_INSTANCES_PER_ROW: i32 = 10;
-
 
 fn main() {
     env_logger::init();

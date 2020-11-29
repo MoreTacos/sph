@@ -1,10 +1,8 @@
 mod state;
 
 pub use crate::state::State;
-use std::iter;
 use sph::Sph;
-use utils::Instance;
-use utils::InstanceRaw;
+use std::iter;
 use utils::Vertex;
 use winit::{event::*, window::Window};
 
@@ -26,22 +24,19 @@ const VERTICES: &[Vertex] = &[
 const INDICES: &[u16] = &[0, 1, 2, 1, 2, 3];
 
 impl State {
-    pub async fn new(
-        window: &Window,
-        model: Sph,
-    ) -> Self {
-        let instance = &State::Instance();
-        let surface = State::Surface(instance, window);
-        let (device, queue) = State::DeviceQueue(instance, &surface).await;
-        let size = State::Size(window);
-        let sc_desc = State::Sc_Desc(&size);
-        let swap_chain = State::Swap_Chain(&device, &surface, &sc_desc);
-        let render_pipeline = State::Render_Pipeline(&device, &sc_desc);
-        let vertex_buffer = State::Vertex_Buffer(&device, VERTICES);
-        let index_buffer = State::Index_Buffer(&device, INDICES);
-        let num_indices = State::Num_Indices(INDICES);
+    pub async fn new(window: &Window, model: Sph) -> Self {
+        let instance = &State::instance();
+        let surface = State::surface(instance, window);
+        let (device, queue) = State::device_queue(instance, &surface).await;
+        let size = State::size(window);
+        let sc_desc = State::sc_desc(&size);
+        let swap_chain = State::swap_chain(&device, &surface, &sc_desc);
+        let render_pipeline = State::render_pipeline(&device, &sc_desc);
+        let vertex_buffer = State::vertex_buffer(&device, VERTICES);
+        let index_buffer = State::index_buffer(&device, INDICES);
+        let num_indices = State::num_indices(INDICES);
         let instances = model.instances();
-        let instance_buffer = State::Instance_Buffer(&device, &instances);
+        let instance_buffer = State::instance_buffer(&device, &instances);
         Self {
             surface,
             device,
@@ -64,14 +59,14 @@ impl State {
         self.sc_desc.height = new_size.height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
     }
-    pub fn input(&mut self, event: &WindowEvent) -> bool {
+    pub fn input(&mut self, _event: &WindowEvent) -> bool {
         false
     }
     pub fn update(&mut self) {}
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
         self.model.timestep();
         self.instances = self.model.instances();
-        self.instance_buffer = State::Instance_Buffer(&self.device, &self.instances);
+        self.instance_buffer = State::instance_buffer(&self.device, &self.instances);
 
         let frame = self.swap_chain.get_current_frame()?.output;
         let mut encoder = self
