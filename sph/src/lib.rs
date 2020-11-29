@@ -2,7 +2,7 @@ use cgmath::Rotation3;
 use cgmath::Vector2;
 use utils::Instance;
 
-const TIMESTEP: f32 = 0.05;
+const TIMESTEP: f32 = 0.001;
 const GRAVITY: f32 = -9.8;
 const BOUND_DAMPING: f32 = -0.5;
 const R: f32 = 0.01;
@@ -33,11 +33,32 @@ pub struct Sph {
 }
 
 impl Sph {
-    pub fn new(_number_instances_per_row: i32) -> Self {
-        let particles = vec![Particle::new(0.5, 1.0), Particle::new(0.49, 0.99)];
+    pub fn new(number_instances_per_row: i32) -> Self {
+        let mut particles = vec![];
+
+        let center_x = VIEW_WIDTH / 2.0;
+        let quarter_x = VIEW_WIDTH / 4.0;
+        let dist_x = center_x / number_instances_per_row as f32;
+
+        let center_y = VIEW_HEIGHT / 2.0;
+        let quarter_y = VIEW_HEIGHT / 4.0;
+        let dist_y = center_y / number_instances_per_row as f32;
+
+        for i in 0..number_instances_per_row {
+            let x = quarter_x + i as f32 * dist_x;
+            for j in 0..number_instances_per_row {
+                let y = quarter_y * j as f32 * dist_y;
+
+                let p = Particle::new(x, y);
+                particles.push(p);
+            }
+        }
+
+        particles.push(Particle::new(0.5, 0.5));
 
         Self { particles }
     }
+
     pub fn integrate(&mut self, index: usize) {
         let mut p = self.particles[index];
 
