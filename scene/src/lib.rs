@@ -4,20 +4,22 @@ pub use crate::state::State;
 use sph::Sph;
 use std::iter;
 use utils::Vertex;
+use utils::Instance;
 use winit::{event::*, window::Window};
+use cgmath::Vector2;
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.01, 0.01],
+        position: [-0.5, 0.5],
     },
     Vertex {
-        position: [0.01, 0.01],
+        position: [0.5, 0.5],
     },
     Vertex {
-        position: [-0.01, -0.01],
+        position: [-0.5, -0.5],
     },
     Vertex {
-        position: [0.01, -0.01],
+        position: [0.5, -0.5],
     },
 ];
 
@@ -66,6 +68,12 @@ impl State {
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
         self.model.timestep();
         self.instances = self.model.instances();
+        let scale_ratio = self.size.width as f32 / self.size.height as f32;
+        /*self.instances = self.instances.iter_mut().map(|p| Instance {
+            position: p.position,
+            rotation: p.rotation,
+            scale: Vector2::new(p.scale.x / scale_ratio, p.scale.y),
+        }).collect::<Vec<_>>(); */
         self.instance_buffer = State::instance_buffer(&self.device, &self.instances);
 
         let frame = self.swap_chain.get_current_frame()?.output;
@@ -81,9 +89,9 @@ impl State {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
+                            r: 1.0,
+                            g: 1.0,
+                            b: 1.0,
                             a: 1.0,
                         }),
                         store: true,

@@ -2,10 +2,10 @@ use cgmath::Rotation3;
 use cgmath::Vector2;
 use utils::Instance;
 
-const TIMESTEP: f32 = 0.001;
+const TIMESTEP: f32 = 0.004;
+const SCALE_CONSTANT: f32 = 1.8;
 const GRAVITY: f32 = -9.8;
 const BOUND_DAMPING: f32 = -0.5;
-const R: f32 = 0.01;
 const VIEW_WIDTH: f32 = 1.0;
 const VIEW_HEIGHT: f32 = 1.0;
 
@@ -13,7 +13,11 @@ const VIEW_HEIGHT: f32 = 1.0;
 pub struct Particle {
     pos: Vector2<f32>,
     vel: Vector2<f32>,
+    force: Vector2<f32>,
+    density: f32,
+    pressure: f32
     m: f32,
+    scale: Vector2<f32>,
 }
 
 impl Particle {
@@ -21,10 +25,12 @@ impl Particle {
         let pos = Vector2::new(x, y);
         let vel = Vector2::new(0.0, 0.0);
         let m = 1.0;
-        Particle { pos, vel, m }
+        let scale = Vector2::new(0.01, 0.01);
+        Particle { pos, vel, m, scale }
     }
-    fn abs(&self) -> f32 {
-        (self.pos.x * self.pos.x + self.pos.y * self.pos.y).sqrt()
+    fn abs_dist(&self, p: &Particle) -> f32 {
+        (self.pos.x * self.pos.x + self.pos.y * self.pos.y).sqrt() -
+        (p.pos.x * p.pos.x + p.pos.y * p.pos.y).sqrt()
     }
 }
 
@@ -36,6 +42,7 @@ impl Sph {
     pub fn new(number_instances_per_row: i32) -> Self {
         let mut particles = vec![];
 
+        
         let center_x = VIEW_WIDTH / 2.0;
         let quarter_x = VIEW_WIDTH / 4.0;
         let dist_x = center_x / number_instances_per_row as f32;
@@ -47,14 +54,16 @@ impl Sph {
         for i in 0..number_instances_per_row {
             let x = quarter_x + i as f32 * dist_x;
             for j in 0..number_instances_per_row {
-                let y = quarter_y * j as f32 * dist_y;
+                let y = quarter_y + j as f32 * dist_y;
 
                 let p = Particle::new(x, y);
                 particles.push(p);
             }
         }
+        
 
         particles.push(Particle::new(0.5, 0.5));
+        particles.push(Particle::new(0.49, 0.5));
 
         Self { particles }
     }
@@ -65,39 +74,47 @@ impl Sph {
         p.pos.x = p.pos.x + p.vel.x * TIMESTEP;
         p.pos.y = p.pos.y + p.vel.y * TIMESTEP;
 
-        if p.pos.x - R < 0.0 {
+        if p.pos.x - p.scale.x < 0.0 {
             p.vel.x *= BOUND_DAMPING;
-            p.pos.x = R;
+            p.pos.x = p.scale.x;
         }
         if p.pos.x + 0.01 > VIEW_WIDTH {
             p.vel.x *= BOUND_DAMPING;
-            p.pos.x = VIEW_WIDTH - R;
+            p.pos.x = VIEW_WIDTH - p.scale.x;
         }
         if p.pos.y - 0.01 < 0.0 {
             p.vel.y *= BOUND_DAMPING;
-            p.pos.y = R;
+            p.pos.y = p.scale.y;
         }
         if p.pos.y + 0.01 > VIEW_HEIGHT {
             p.vel.y *= BOUND_DAMPING;
-            p.pos.y = VIEW_HEIGHT - R;
+            p.pos.y = VIEW_HEIGHT - p.scale.y;
         }
 
         let gravity = Vector2 { x: 0.0, y: GRAVITY };
         let mut pressure = Vector2 { x: 0.0, y: 0.0 };
-
+        let mut viscosity = Vector2 { x: 0.0, y: 0.0 };
+        let mut n = vec![];
+        
         for &pi in &self.particles {
             if pi == p {
                 continue;
             }
 
-            if (p.abs() - pi.abs()).abs() < R {
-                pressure.x += (p.pos.x - pi.pos.x) * p.m * 10.0;
-                pressure.y += (p.pos.y - pi.pos.y) * p.m * 10.0;
+            if (p.abs_dist(&pi)).abs() < p.scale.x {
+                n.push(pi);
             }
         }
-        println!("{:?}", pressure);
 
-        let forces = gravity + pressure;
+        for pi in n {
+            pressure.x += (p.pos.x - pi.pos.x) * 1.0;
+            pressure.y += (p.pos.y - pi.pos.y) * 1.0;
+
+            viscosity.x += (p.vel.x - pi.vel.x) * -0.5;
+            viscosity.y += (p.vel.y - pi.vel.x) * -0.5;
+        }
+
+        let forces = gravity + pressure + viscosity;
 
         p.vel.x = p.vel.x + (forces.x / p.m) * TIMESTEP;
         p.vel.y = p.vel.y + (forces.y / p.m) * TIMESTEP;
@@ -123,6 +140,7 @@ impl Sph {
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
                 ),
+                scale: p.scale * SCALE_CONSTANT,
             })
             .collect::<Vec<_>>();
         instances

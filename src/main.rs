@@ -11,7 +11,7 @@ use winit::{
     window::WindowBuilder,
 };
 
-const NUM_INSTANCES_PER_ROW: i32 = 10;
+const NUM_INSTANCES_PER_ROW: i32 = 30;
 
 fn main() {
     env_logger::init();
