@@ -13,9 +13,6 @@ const VIEW_HEIGHT: f32 = 1.0;
 pub struct Particle {
     pos: Vector2<f32>,
     vel: Vector2<f32>,
-    force: Vector2<f32>,
-    density: f32,
-    pressure: f32
     m: f32,
     scale: Vector2<f32>,
 }
