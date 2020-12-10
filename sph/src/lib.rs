@@ -1,13 +1,19 @@
 use cgmath::Rotation3;
 use cgmath::Vector2;
 use utils::Instance;
+use rand::Rng;
 
-const TIMESTEP: f32 = 0.004;
+// OFFICIAL CONSTANTS
+// VIEW: starts at 0,0 at top left corner
+const VIEW_WIDTH: f32 = 1.0;
+const VIEW_HEIGHT: f32 = 1.0;
+
+const DT: f32 = 0.004;
+const R: f32 = 0.05;
+
 const SCALE_CONSTANT: f32 = 1.8;
 const GRAVITY: f32 = -9.8;
 const BOUND_DAMPING: f32 = -0.5;
-const VIEW_WIDTH: f32 = 1.0;
-const VIEW_HEIGHT: f32 = 1.0;
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Particle {
@@ -52,13 +58,14 @@ impl Sph {
             let x = quarter_x + i as f32 * dist_x;
             for j in 0..number_instances_per_row {
                 let y = quarter_y + j as f32 * dist_y;
+                let mut rng = rand::thread_rng();
+                let jitter = rng.gen_range(-0.02, 0.02);
 
-                let p = Particle::new(x, y);
+                let p = Particle::new(x + jitter, y);
                 particles.push(p);
             }
         }
         
-
         particles.push(Particle::new(0.5, 0.5));
         particles.push(Particle::new(0.49, 0.5));
 
@@ -68,8 +75,8 @@ impl Sph {
     pub fn integrate(&mut self, index: usize) {
         let mut p = self.particles[index];
 
-        p.pos.x = p.pos.x + p.vel.x * TIMESTEP;
-        p.pos.y = p.pos.y + p.vel.y * TIMESTEP;
+        p.pos.x = p.pos.x + p.vel.x * DT;
+        p.pos.y = p.pos.y + p.vel.y * DT;
 
         if p.pos.x - p.scale.x < 0.0 {
             p.vel.x *= BOUND_DAMPING;
@@ -113,8 +120,8 @@ impl Sph {
 
         let forces = gravity + pressure + viscosity;
 
-        p.vel.x = p.vel.x + (forces.x / p.m) * TIMESTEP;
-        p.vel.y = p.vel.y + (forces.y / p.m) * TIMESTEP;
+        p.vel.x = p.vel.x + (forces.x / p.m) * DT;
+        p.vel.y = p.vel.y + (forces.y / p.m) * DT;
 
         self.particles[index] = p;
     }
@@ -129,8 +136,8 @@ impl Sph {
             .iter()
             .map(|p| Instance {
                 position: cgmath::Vector3 {
-                    x: (p.pos.x - 0.5) * 2.0,
-                    y: (p.pos.y - 0.5) * 2.0,
+                    x: ((p.pos.x - 0.5) * 2.0),
+                    y: ((p.pos.y - 0.5) * 2.0),
                     z: 0.0,
                 },
                 rotation: cgmath::Quaternion::from_axis_angle(
