@@ -4,9 +4,7 @@ pub use crate::state::State;
 use sph::Sph;
 use std::iter;
 use utils::Vertex;
-use utils::Instance;
 use winit::{event::*, window::Window};
-use cgmath::Vector2;
 
 const VERTICES: &[Vertex] = &[
     Vertex {
@@ -68,7 +66,7 @@ impl State {
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
         self.model.timestep();
         self.instances = self.model.instances();
-        let scale_ratio = self.size.width as f32 / self.size.height as f32;
+        let _scale_ratio = self.size.width as f32 / self.size.height as f32;
         /*self.instances = self.instances.iter_mut().map(|p| Instance {
             position: p.position,
             rotation: p.rotation,
