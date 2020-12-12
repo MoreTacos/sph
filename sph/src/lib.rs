@@ -1,26 +1,36 @@
 use cgmath::Rotation3;
 use cgmath::Vector2;
+use cgmath::InnerSpace;
 use utils::Instance;
 use rand::Rng;
 
-// OFFICIAL CONSTANTS
 // VIEW: starts at 0,0 at top left corner
 const VIEW_WIDTH: f32 = 1.0;
 const VIEW_HEIGHT: f32 = 1.0;
 
-const DT: f32 = 0.004;
-const R: f32 = 0.05;
+const DT: f32 = 0.0008;
+const R: f32 = 0.01;
+const DIAM2: f32 = (2.0 * R) * (2.0 * R);
 
-const SCALE_CONSTANT: f32 = 1.8;
+const POLY6: f32 = 315.0/(65.0 * 3.14 * R * R * R * R * R * R * R * R * R);
+const REST_DENS: f32 = 100.0;
+const GAS_CONST: f32 = 600.0;
+const VISC: f32 = 250.0;
+const VISC_LAP: f32 = 45.0/(3.14 * R * R * R * R * R * R);
+const SPIKY_GRAD: f32 = -45.0/(3.14 * R * R * R * R * R * R);
+
 const GRAVITY: f32 = -9.8;
+const G: Vector2<f32> = Vector2{ x: 0.0, y: GRAVITY * 300.0 };
 const BOUND_DAMPING: f32 = -0.5;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Particle {
     pos: Vector2<f32>,
     vel: Vector2<f32>,
     m: f32,
-    scale: Vector2<f32>,
+    rho: f32,
+    p: f32,
+    f: Vector2<f32>,
 }
 
 impl Particle {
@@ -28,12 +38,10 @@ impl Particle {
         let pos = Vector2::new(x, y);
         let vel = Vector2::new(0.0, 0.0);
         let m = 1.0;
-        let scale = Vector2::new(0.01, 0.01);
-        Particle { pos, vel, m, scale }
-    }
-    fn abs_dist(&self, p: &Particle) -> f32 {
-        (self.pos.x * self.pos.x + self.pos.y * self.pos.y).sqrt() -
-        (p.pos.x * p.pos.x + p.pos.y * p.pos.y).sqrt()
+        let rho = 0.0;
+        let p = 0.0;
+        let f = Vector2::new(0.0, 0.0);
+        Particle { pos, vel, m, rho, p, f }
     }
 }
 
@@ -65,63 +73,70 @@ impl Sph {
                 particles.push(p);
             }
         }
+       
         
-        particles.push(Particle::new(0.5, 0.5));
-        particles.push(Particle::new(0.49, 0.5));
+        
+        particles.push(Particle::new(0.375, 0.5));
+        particles.push(Particle::new(0.525, 0.5));
 
         Self { particles }
     }
 
     pub fn integrate(&mut self, index: usize) {
         let mut p = self.particles[index];
-
-        p.pos.x = p.pos.x + p.vel.x * DT;
-        p.pos.y = p.pos.y + p.vel.y * DT;
-
-        if p.pos.x - p.scale.x < 0.0 {
-            p.vel.x *= BOUND_DAMPING;
-            p.pos.x = p.scale.x;
-        }
-        if p.pos.x + 0.01 > VIEW_WIDTH {
-            p.vel.x *= BOUND_DAMPING;
-            p.pos.x = VIEW_WIDTH - p.scale.x;
-        }
-        if p.pos.y - 0.01 < 0.0 {
-            p.vel.y *= BOUND_DAMPING;
-            p.pos.y = p.scale.y;
-        }
-        if p.pos.y + 0.01 > VIEW_HEIGHT {
-            p.vel.y *= BOUND_DAMPING;
-            p.pos.y = VIEW_HEIGHT - p.scale.y;
-        }
-
-        let gravity = Vector2 { x: 0.0, y: GRAVITY };
-        let mut pressure = Vector2 { x: 0.0, y: 0.0 };
-        let mut viscosity = Vector2 { x: 0.0, y: 0.0 };
-        let mut n = vec![];
         
+        p.rho = 0.0;
         for &pi in &self.particles {
-            if pi == p {
+            let rij = pi.pos - p.pos;
+            let r2 = rij.magnitude2();
+
+            if r2 < DIAM2 {
+                p.rho += p.m * POLY6 * (DIAM2 - r2) * (DIAM2 - r2) * (DIAM2 - r2);
+            }
+        }
+
+        p.p = GAS_CONST * (p.rho - REST_DENS);
+
+        let mut fpress = Vector2{ x: 0.0, y: 0.0 };
+        let mut fvisc = Vector2{ x: 0.0, y: 0.0 };
+
+        for &pi in &self.particles {
+            if pi.pos == p.pos {
                 continue;
             }
 
-            if (p.abs_dist(&pi)).abs() < p.scale.x {
-                n.push(pi);
+            let rij = pi.pos - p.pos;
+            let r = rij.magnitude();
+
+            if r < (R*2.0) {
+                fpress += -rij.normalize() * p.m * (p.p + pi.p)/(2.0 * pi.rho) 
+                    * SPIKY_GRAD * ((2.0*R) - r) * ((2.0*R) - r);
+                fvisc += VISC * p.m * (p.vel - pi.vel)/pi.rho * VISC_LAP * ((2.0*R) - r);
             }
+            let fgrav = G * p.rho;
+            p.f = fpress + fvisc + fgrav;
         }
 
-        for pi in n {
-            pressure.x += (p.pos.x - pi.pos.x) * 1.0;
-            pressure.y += (p.pos.y - pi.pos.y) * 1.0;
+        p.vel += DT*p.f/p.rho;
+        p.pos += DT*p.vel;
 
-            viscosity.x += (p.vel.x - pi.vel.x) * -0.5;
-            viscosity.y += (p.vel.y - pi.vel.x) * -0.5;
+        
+        if p.pos.x - R < 0.0 {
+            p.vel.x *= BOUND_DAMPING;
+            p.pos.x = R;
         }
-
-        let forces = gravity + pressure + viscosity;
-
-        p.vel.x = p.vel.x + (forces.x / p.m) * DT;
-        p.vel.y = p.vel.y + (forces.y / p.m) * DT;
+        if p.pos.x + R > VIEW_WIDTH {
+            p.vel.x *= BOUND_DAMPING;
+            p.pos.x = VIEW_WIDTH - R;
+        }
+        if p.pos.y - R < 0.0 {
+            p.vel.y *= BOUND_DAMPING;
+            p.pos.y = R;
+        }
+        if p.pos.y + R > VIEW_HEIGHT {
+            p.vel.y *= BOUND_DAMPING;
+            p.pos.y = VIEW_HEIGHT - R;
+        }
 
         self.particles[index] = p;
     }
@@ -144,7 +159,7 @@ impl Sph {
                     cgmath::Vector3::unit_z(),
                     cgmath::Deg(0.0),
                 ),
-                scale: p.scale * SCALE_CONSTANT,
+                scale: 2.0 * cgmath::Vector2{x: R, y: R},
             })
             .collect::<Vec<_>>();
         instances

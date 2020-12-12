@@ -8,20 +8,86 @@ use winit::{event::*, window::Window};
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.5, 0.5],
+        position: [0.0, 0.0],
+    },
+    Vertex {
+        position: [0.0, 1.0]
+    },
+    Vertex {
+        position: [1.0, 0.0]
+    },
+    Vertex {
+        position: [0.0, -1.0]
+    },
+    Vertex {
+        position: [-1.0, 0.0]
+    },
+];
+/*const VERTICES: &[Vertex] = &[
+    Vertex {
+        position: [0.0, 0.0],
+    },
+    Vertex {
+        position: [0.0, 0.707],
+    },
+    Vertex {
+        position: [0.25, 0.661],
     },
     Vertex {
         position: [0.5, 0.5],
     },
     Vertex {
-        position: [-0.5, -0.5],
+        position: [0.661, 0.25],
+    },
+    Vertex {
+        position: [0.707, 0.0],
+    },
+    Vertex {
+        position: [0.661, -0.25],
     },
     Vertex {
         position: [0.5, -0.5],
     },
+    Vertex {
+        position: [0.25, -0.661],
+    },
+    Vertex {
+        position: [0.0, -0.707],
+    },
+    Vertex {
+        position: [-0.25, -0.661],
+    },
+    Vertex {
+        position: [-0.5, -0.5],
+    },
+    Vertex {
+        position: [-0.661, -0.25],
+    },
+    Vertex {
+        position: [-0.707, 0.0],
+    },
+    Vertex {
+        position: [-0.661, 0.25],
+    },
+    Vertex {
+        position: [-0.5, 0.5],
+    },
+    Vertex {
+        position: [-0.25, 0.661],
+    },
 ];
 
-const INDICES: &[u16] = &[0, 1, 2, 1, 2, 3];
+const INDICES: &[u16] = &[
+    0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 7, 0, 7, 8, 0, 8, 9, 0, 9, 10, 0, 10, 11, 0,
+    11, 12, 0, 12, 13, 0, 13, 14, 0, 14, 15, 0, 15, 16, 0, 16, 1,
+];
+*/
+const INDICES: &[u16] = &[
+    0,1,2,
+    0,2,3,
+    0,3,4,
+    0,4,1,
+];
 
 impl State {
     pub async fn new(window: &Window, model: Sph) -> Self {
