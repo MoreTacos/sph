@@ -1,5 +1,5 @@
 # Rust Fluid Simulation
-Automatic static site generator build system for easy automation
+From scratch fluid simulation built entirely with Rust!
 
 <img src="./fluid.jpg" alt="Fluid simulation" width="360" height="270">
 
